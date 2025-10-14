@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+node_modules/
+.next/
+out/
+build/
+*.log
+.DS_Store
+.env.local
+.env.*.local
+*.pem
+
+// FILE: jsconfig.json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": "./*"
+    }
+  }
+}
