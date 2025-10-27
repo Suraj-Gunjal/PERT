@@ -70,18 +70,24 @@ export default function Home() {
     }
   }, [activities, usePerT]);
 
-  const handleLoadExample = useCallback(() => {
-    setActivities([
-      { id: 'A', name: 'Planning', duration: 5, predecessors: [], o: 3, m: 5, p: 7 },
-      { id: 'B', name: 'Design', duration: 8, predecessors: ['A'], o: 6, m: 8, p: 10 },
-      { id: 'C', name: 'Development', duration: 15, predecessors: ['B'], o: 12, m: 15, p: 18 },
-      { id: 'D', name: 'Testing', duration: 6, predecessors: ['C'], o: 5, m: 6, p: 8 },
-      { id: 'E', name: 'Documentation', duration: 4, predecessors: ['B'], o: 3, m: 4, p: 5 },
-      { id: 'F', name: 'Deployment', duration: 3, predecessors: ['D', 'E'], o: 2, m: 3, p: 4 },
-    ]);
-    setResults(null);
-    setError('');
-  }, []);
+const handleLoadExample = useCallback(() => {
+  setActivities([
+    { id: 'A', name: 'Initiation', duration: 5, predecessors: [], o: 4, m: 5, p: 6 },
+    { id: 'B', name: 'Detailed Design', duration: 10, predecessors: ['A'], o: 8, m: 10, p: 12 },
+    { id: 'C', name: 'Site Identification', duration: 5, predecessors: ['B'], o: 4, m: 5, p: 6 },
+    { id: 'D', name: 'Permits & Approvals', duration: 7, predecessors: ['B'], o: 6, m: 7, p: 9 },
+    { id: 'E', name: 'Raw Material Transportation', duration: 8, predecessors: ['B'], o: 6, m: 8, p: 10 },
+    { id: 'F', name: 'Foundation', duration: 10, predecessors: ['C', 'D', 'E'], o: 8, m: 10, p: 12 },
+    { id: 'G', name: 'Basic Structure of Building', duration: 20, predecessors: ['F'], o: 18, m: 20, p: 22 },
+    { id: 'H', name: 'Mechanical, Electrical & Plumbing', duration: 12, predecessors: ['G'], o: 10, m: 12, p: 14 },
+    { id: 'I', name: 'Interior Design', duration: 10, predecessors: ['G'], o: 8, m: 10, p: 12 },
+    { id: 'J', name: 'Painting & Decoration', duration: 8, predecessors: ['I'], o: 6, m: 8, p: 10 },
+    { id: 'K', name: 'Sensor Installation & Calibration', duration: 7, predecessors: ['G'], o: 6, m: 7, p: 9 },
+    { id: 'L', name: 'Project Closure', duration: 5, predecessors: ['H','J','K'], o: 4, m: 5, p: 6 },
+  ]);
+  setResults(null);
+  setError('');
+}, []);
 
   const handleClearAll = useCallback(() => {
     setActivities([{ id: 'A', name: 'Start', duration: 0, predecessors: [], o: 0, m: 0, p: 0 }]);
