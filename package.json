@@ -4,6 +4,7 @@
   "description": "Professional PERT/CPM Network Analysis for Project Management",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "tsc next.config.ts --esModuleInterop --module commonjs --target ESNext --outDir .",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
