@@ -12,12 +12,8 @@ export default function GanttChart({ results }) {
     topMargin + results.activities.length * (barHeight + spacing) + 40;
 
   return (
-    <div style={{ overflowX: "auto", marginTop: "20px" }}>
-      <svg
-        width={width}
-        height={height}
-        style={{ border: "1px solid #ddd", borderRadius: "8px" }}
-      >
+    <div className="gantt-surface">
+      <svg width={width} height={height} style={{ display: "block" }}>
         {/* Timeline header */}
         <rect
           x="0"

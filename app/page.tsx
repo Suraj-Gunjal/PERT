@@ -1,5 +1,4 @@
 'use client';
-'use client';
 
 import { useState, useCallback } from 'react';
 import ActivityTable from '@/components/ActivityTable';
@@ -9,11 +8,26 @@ import StatsCard from '@/components/StatsCard';
 import GanttChart from '@/components/GanttChart';
 import { calculateCPM, validateActivities } from '@/lib/calculations';
 
+type Activity = {
+  id: string;
+  name: string;
+  duration: number;
+  predecessors: string[];
+  o: number;
+  m: number;
+  p: number;
+};
+type CalculationResults = {
+  activities: (Activity & { es: number; ef: number; ls: number; lf: number; slack: number; critical: boolean })[];
+  projectDuration: number;
+  criticalPath: string[];
+};
+
 export default function Home() {
-  const [activities, setActivities] = useState([
+  const [activities, setActivities] = useState<Activity[]>([
     { id: 'A', name: 'Start', duration: 0, predecessors: [], o: 0, m: 0, p: 0 },
   ]);
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<CalculationResults | null>(null);
   const [usePerT, setUsePERT] = useState(false);
   const [activeTab, setActiveTab] = useState('network'); // network, gantt, stats
   const [error, setError] = useState('');
@@ -26,24 +40,25 @@ export default function Home() {
     ]);
   }, [activities.length]);
 
-  const handleUpdateActivity = useCallback((index, field, value) => {
+  const handleUpdateActivity = useCallback((index: number, field: string, value: string) => {
     setActivities(prev => {
       const updated = [...prev];
+      const activity = updated[index];
       if (field === 'predecessors') {
-        updated[index][field] = value
+        activity.predecessors = value
           .split(',')
           .map(v => v.trim())
           .filter(v => v);
       } else if (['duration', 'o', 'm', 'p'].includes(field)) {
-        updated[index][field] = Math.max(0, parseFloat(value) || 0);
+        activity[field as 'duration' | 'o' | 'm' | 'p'] = Math.max(0, parseFloat(value) || 0);
       } else {
-        updated[index][field] = value;
+        activity[field as 'id' | 'name'] = value;
       }
       return updated;
     });
   }, []);
 
-  const handleDeleteActivity = useCallback(index => {
+  const handleDeleteActivity = useCallback((index: number) => {
     setActivities(prev => {
       if (prev.length <= 1) return prev;
       const deleted = prev[index];
@@ -60,13 +75,13 @@ export default function Home() {
       setError('');
       const validation = validateActivities(activities);
       if (!validation.valid) {
-        setError(validation.error);
+        setError(validation.error || 'Please review the activity inputs.');
         return;
       }
-      const calculatedResults = calculateCPM(activities, usePerT);
+      const calculatedResults = calculateCPM(activities, usePerT) as CalculationResults;
       setResults(calculatedResults);
     } catch (error) {
-      setError(`Calculation error: ${error.message}`);
+      setError(`Calculation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [activities, usePerT]);
 
@@ -96,7 +111,7 @@ const handleLoadExample = useCallback(() => {
   }, []);
 
   const handleExport = useCallback(
-    format => {
+    (format: 'csv' | 'json') => {
       if (!results) return;
 
       if (format === 'csv') {
@@ -131,35 +146,52 @@ const handleLoadExample = useCallback(() => {
   );
 
   return (
-    <div className="container">
-      <div className="header">
-        <h1>📊 PERT/CPM Network Analysis</h1>
-        <p>Project Evaluation and Review Technique with Critical Path Method</p>
-      </div>
+    <main className="app-shell">
+      <header className="topbar">
+        <div className="brand-lockup">
+          <div className="brand-mark">P</div>
+          <div>
+            <p className="eyebrow">Operations studio</p>
+            <h1>PERT / CPM Planner</h1>
+          </div>
+        </div>
+        <div className="topbar-meta">
+          <span className="status-dot" />
+          <span>Planning workspace</span>
+        </div>
+      </header>
+
+      <section className="intro">
+        <div>
+          <p className="eyebrow accent-eyebrow">Schedule intelligence</p>
+          <h2>Turn dependencies into a clear delivery plan.</h2>
+          <p className="intro-copy">Model activities, surface the critical path, and understand where your schedule has room to move.</p>
+        </div>
+        <div className="intro-note">
+          <span className="note-line" />
+          <p>Built for fast scenario planning<br />and confident project reviews.</p>
+        </div>
+      </section>
 
       <div className="content">
-        {/* LEFT COLUMN - INPUTS */}
-        <div className="section">
-          <div className="section-title">Input Activities</div>
+        <section className="panel input-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">01 / Define</p>
+              <h3>Project activities</h3>
+            </div>
+            <span className="count-badge">{activities.length} {activities.length === 1 ? 'activity' : 'activities'}</span>
+          </div>
 
           {error && (
-            <div
-              style={{
-                padding: '12px',
-                background: '#f8d7da',
-                color: '#721c24',
-                borderRadius: '6px',
-                fontSize: '14px',
-              }}
-            >
-              ⚠️ {error}
-            </div>
+            <div className="alert" role="alert"><span className="alert-icon">!</span>{error}</div>
           )}
 
-          <div className="control-group">
-            <label style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '14px' }}>
+          <div className="mode-switch">
+            <label className="toggle-label">
               <input type="checkbox" checked={usePerT} onChange={e => setUsePERT(e.target.checked)} />
-              Use PERT (3-point estimates)
+              <span className="toggle-track"><span /></span>
+              <span><strong>PERT mode</strong><small>Use optimistic, likely, and pessimistic estimates</small></span>
             </label>
           </div>
 
@@ -171,82 +203,91 @@ const handleLoadExample = useCallback(() => {
             usePERT={usePerT}
           />
 
-          <div className="controls">
-            <button onClick={handleCalculate} className="btn btn-primary" style={{ flex: 1 }}>
-              🔧 Calculate CPM/PERT
+          <div className="controls action-row">
+            <button onClick={handleCalculate} className="btn btn-primary calculate-button">
+              <span>Run analysis</span><span className="button-arrow">↗</span>
             </button>
             <button onClick={handleLoadExample} className="btn btn-secondary btn-small">
-              📋 Example
+              Load example
             </button>
             <button onClick={handleClearAll} className="btn btn-danger btn-small">
-              🗑️ Clear
+              Clear
             </button>
           </div>
-        </div>
+        </section>
 
-        {/* RIGHT COLUMN - RESULTS */}
-        <div className="section">
+        <section className="panel results-panel">
           {results ? (
             <>
-              <div className="section-title">Results & Statistics</div>
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">02 / Read</p>
+                  <h3>Schedule overview</h3>
+                </div>
+                <span className="live-badge"><span />Calculated</span>
+              </div>
 
               <StatsCard results={results} />
 
               <ResultsTable results={results} />
 
-              <div className="controls">
+              <div className="controls export-row">
                 <button
                   onClick={() => handleExport('csv')}
                   className="btn btn-success btn-small"
-                  style={{ flex: 1 }}
                 >
-                  📥 CSV
+                  Export CSV
                 </button>
                 <button
                   onClick={() => handleExport('json')}
                   className="btn btn-success btn-small"
-                  style={{ flex: 1 }}
                 >
-                  📋 JSON
+                  Export JSON
                 </button>
               </div>
             </>
           ) : (
-            <div style={{ textAlign: 'center', color: '#999', padding: '40px 20px' }}>
-              <div style={{ fontSize: '40px', marginBottom: '10px' }}>📈</div>
-              Click "Calculate CPM/PERT" to see results and analysis
+            <div className="empty-state">
+              <div className="empty-icon">↗</div>
+              <p className="eyebrow">02 / Read</p>
+              <h3>Your schedule, at a glance.</h3>
+              <p>Run the analysis to reveal duration, float, and the activities that control delivery.</p>
             </div>
           )}
-        </div>
+        </section>
       </div>
 
-      {/* VISUALIZATIONS */}
       {results && (
-        <div style={{ padding: '30px', borderTop: '1px solid #eee' }}>
-          <div className="section-title" style={{ marginBottom: '20px' }}>
-            Visualizations
+        <section className="visual-section">
+          <div className="visual-heading">
+            <div>
+              <p className="eyebrow">03 / Explore</p>
+              <h3>Project visualizations</h3>
+            </div>
+            <p>Follow the shape of the plan, then inspect the pressure points.</p>
           </div>
 
-          <div className="controls" style={{ marginBottom: '20px' }}>
+          <div className="view-tabs">
             <button
               onClick={() => setActiveTab('network')}
-              className={`btn ${activeTab === 'network' ? 'btn-primary' : 'btn-secondary'}`}
+              className={`tab-button ${activeTab === 'network' ? 'active' : ''}`}
             >
-              🌐 Network Graph
+              <span className="tab-number">01</span> Network graph
             </button>
             <button
               onClick={() => setActiveTab('gantt')}
-              className={`btn ${activeTab === 'gantt' ? 'btn-primary' : 'btn-secondary'}`}
+              className={`tab-button ${activeTab === 'gantt' ? 'active' : ''}`}
             >
-              📊 Gantt Chart
+              <span className="tab-number">02</span> Gantt chart
             </button>
           </div>
 
           {activeTab === 'network' && <GraphDisplay results={results} activities={activities} />}
           {activeTab === 'gantt' && <GanttChart results={results} />}
-        </div>
+        </section>
       )}
-    </div>
+      <footer className="footer">PERT / CPM Planner <span>•</span> A practical view of schedule risk and momentum</footer>
+    </main>
   );
 }
 

@@ -28,7 +28,8 @@ export default function GraphDisplay({ results, activities }) {
         const maxDuration = Math.max(...results.activities.map((x) => x.ef));
         const x =
           padding + (resultActivity.es / maxDuration) * (width - 2 * padding);
-        const y = 50 + Math.random() * (height - 100);
+        const row = results.activities.findIndex((item) => item.id === a.id);
+        const y = 62 + (row % 5) * 76;
         activityMap[a.id] = { x, y, ...resultActivity };
       }
     });
@@ -56,18 +57,18 @@ export default function GraphDisplay({ results, activities }) {
             // Arrow
             const angle = Math.atan2(
               toNode.y - fromNode.y,
-              toNode.x - fromNode.x
+              toNode.x - fromNode.x,
             );
             ctx.fillStyle = isCritical ? "#dc3545" : "#bbb";
             ctx.beginPath();
             ctx.moveTo(toNode.x, toNode.y);
             ctx.lineTo(
               toNode.x - 12 * Math.cos(angle - Math.PI / 6),
-              toNode.y - 12 * Math.sin(angle - Math.PI / 6)
+              toNode.y - 12 * Math.sin(angle - Math.PI / 6),
             );
             ctx.lineTo(
               toNode.x - 12 * Math.cos(angle + Math.PI / 6),
-              toNode.y - 12 * Math.sin(angle + Math.PI / 6)
+              toNode.y - 12 * Math.sin(angle + Math.PI / 6),
             );
             ctx.fill();
           }
@@ -83,7 +84,7 @@ export default function GraphDisplay({ results, activities }) {
         0,
         node.x,
         node.y,
-        nodeRadius
+        nodeRadius,
       );
       if (node.critical) {
         gradient.addColorStop(0, "#ff6b6b");
@@ -130,7 +131,7 @@ export default function GraphDisplay({ results, activities }) {
   }, [results, activities]);
 
   return (
-    <div>
+    <div className="graph-surface">
       <canvas
         ref={canvasRef}
         width={900}
